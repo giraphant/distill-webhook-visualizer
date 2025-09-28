@@ -25,8 +25,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Mount static files (will be created later)
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates
 templates = Jinja2Templates(directory="templates")
@@ -49,7 +49,19 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home page with overview."""
-    return {"message": "Distill Webhook Visualizer is running!", "docs": "/docs"}
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    """Dashboard page with data visualization."""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.get("/deploy", response_class=HTMLResponse)
+async def deploy(request: Request):
+    """Deploy and management page."""
+    return templates.TemplateResponse("deploy.html", {"request": request})
 
 
 @app.get("/health")
