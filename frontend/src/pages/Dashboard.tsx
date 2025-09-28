@@ -35,20 +35,22 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={handleGenerateSample}
             disabled={actionLoading}
+            size="sm"
           >
             <Database className="h-4 w-4 mr-2" />
-            Generate Sample Data
+            <span className="hidden sm:inline">Generate Sample Data</span>
+            <span className="sm:hidden">Sample Data</span>
           </Button>
-          <Button variant="outline" onClick={handleRefresh} disabled={statusLoading}>
+          <Button variant="outline" onClick={handleRefresh} disabled={statusLoading} size="sm">
             <RefreshCw className={`h-4 w-4 mr-2 ${statusLoading ? 'animate-spin' : ''}`} />
-            Refresh Data
+            Refresh
           </Button>
         </div>
       </div>
@@ -117,8 +119,8 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Chart Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 order-2 xl:order-1">
           <Card>
             <CardHeader>
               <CardTitle>Monitor Data Visualization</CardTitle>
@@ -145,7 +147,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 order-1 xl:order-2">
           <Card>
             <CardHeader>
               <CardTitle>Monitor List</CardTitle>

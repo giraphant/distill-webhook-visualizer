@@ -19,11 +19,12 @@ const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Database className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">Distill Webhook Visualizer</span>
+              <span className="text-xl font-bold hidden sm:block">Distill Webhook Visualizer</span>
+              <span className="text-lg font-bold sm:hidden">Distill</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -44,10 +45,31 @@ const Navbar: React.FC = () => {
             })}
           </div>
 
+          {/* Mobile Navigation */}
+          <div className="flex md:hidden items-center space-x-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+
+              return (
+                <Button
+                  key={item.path}
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  asChild
+                >
+                  <Link to={item.path}>
+                    <Icon className="h-4 w-4" />
+                  </Link>
+                </Button>
+              );
+            })}
+          </div>
+
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1 text-sm text-muted-foreground">
               <div className="h-2 w-2 rounded-full bg-green-500"></div>
-              <span>Online</span>
+              <span className="hidden sm:block">Online</span>
             </div>
           </div>
         </div>
