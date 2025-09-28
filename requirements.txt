@@ -1,0 +1,35 @@
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+python-dateutil>=2.8.0
+
+# Visualization
+plotly>=5.17.0
+matplotlib>=3.7.0
+
+# HTTP & Validation
+pydantic>=2.4.0
+httpx>=0.25.0
+requests>=2.31.0
+
+# Environment & Configuration
+python-dotenv>=1.0.0
+click>=8.1.0
+
+# Static Files & Templates
+jinja2>=3.1.0
+python-multipart>=0.0.6
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.9.0
+flake8>=6.0.0
