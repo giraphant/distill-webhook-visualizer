@@ -257,3 +257,165 @@ async def delete_monitor_data(monitor_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     finally:
         db.close()
+
+
+@router.post("/generate-sample")
+async def generate_sample_data() -> Dict[str, Any]:
+    """
+    Generate sample monitoring data for testing purposes.
+    """
+    import random
+    from datetime import datetime, timedelta
+
+    db = get_db_session()
+
+    try:
+        # Generate sample data for multiple monitors
+        monitors = [
+            {"id": "website_homepage", "name": "Website Homepage", "url": "https://example.com"},
+            {"id": "api_status", "name": "API Status", "url": "https://api.example.com/status"},
+            {"id": "pricing_page", "name": "Pricing Page", "url": "https://example.com/pricing"},
+            {"id": "user_dashboard", "name": "User Dashboard", "url": "https://app.example.com/dashboard"}
+        ]
+
+        records_created = 0
+        base_time = datetime.utcnow() - timedelta(days=7)
+
+        for monitor in monitors:
+            # Generate data points over the last 7 days
+            for hour in range(0, 7 * 24, 2):  # Every 2 hours
+                timestamp = base_time + timedelta(hours=hour)
+
+                # Generate realistic values with some variation
+                base_value = random.uniform(50, 200)
+                variation = random.uniform(-20, 20)
+                value = round(base_value + variation, 2)
+
+                # Randomly mark some as changes
+                is_change = random.random() < 0.1  # 10% chance of change
+
+                record = MonitoringData(
+                    monitor_id=monitor["id"],
+                    monitor_name=monitor["name"],
+                    url=monitor["url"],
+                    value=value,
+                    status="changed" if is_change else "unchanged",
+                    timestamp=timestamp,
+                    webhook_received_at=timestamp,
+                    is_change=is_change,
+                    change_type="increase" if is_change and random.random() > 0.5 else "decrease" if is_change else None
+                )
+
+                db.add(record)
+                records_created += 1
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Generated {records_created} sample records across {len(monitors)} monitors"
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error generating sample data: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.delete("/clear-all")
+async def clear_all_data() -> Dict[str, Any]:
+    """
+    Clear all monitoring data from the database.
+    """
+    db = get_db_session()
+
+    try:
+        deleted_count = db.query(MonitoringData).delete()
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Cleared all data: {deleted_count} records deleted"
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error clearing data: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.post("/execute")
+async def execute_command(command_data: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Execute a system command (for deployment management).
+    Note: This is a simplified implementation for demo purposes.
+    In production, you should implement proper security and command validation.
+    """
+    import subprocess
+    import shlex
+
+    try:
+        command = command_data.get("command", "")
+
+        if not command:
+            raise HTTPException(status_code=400, detail="No command provided")
+
+        # For security, only allow specific safe commands
+        allowed_commands = [
+            "systemctl status",
+            "systemctl start",
+            "systemctl stop",
+            "systemctl restart",
+            "git pull",
+            "pip install",
+            "docker ps",
+            "docker images",
+            "tail -n 20"
+        ]
+
+        # Check if command starts with any allowed prefix
+        is_allowed = any(command.startswith(allowed_cmd) for allowed_cmd in allowed_commands)
+
+        if not is_allowed:
+            return {
+                "success": False,
+                "error": "Command not allowed for security reasons",
+                "output": ""
+            }
+
+        # Execute the command with timeout
+        try:
+            result = subprocess.run(
+                shlex.split(command),
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            return {
+                "success": result.returncode == 0,
+                "output": result.stdout if result.returncode == 0 else result.stderr,
+                "error": result.stderr if result.returncode != 0 else None
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Command timed out after 30 seconds",
+                "output": ""
+            }
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "error": f"Command not found: {command.split()[0]}",
+                "output": ""
+            }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error executing command: {str(e)}",
+            "output": ""
+        }
