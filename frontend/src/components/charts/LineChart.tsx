@@ -83,14 +83,7 @@ const LineChart: React.FC<LineChartProps> = ({
             activeDot={{ r: 6, fill: color }}
             name={title}
           />
-          {/* Highlight changes with different colored dots */}
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="transparent"
-            dot={false}
-            name="Changes"
-          />
+          {/* Additional line for highlighting changes - removed complex dot function */}
         </RechartsLineChart>
       </ResponsiveContainer>
     </div>

@@ -11,16 +11,10 @@ import {
   Pie,
   Cell
 } from 'recharts';
-
-interface MonitorStats {
-  monitor_name: string;
-  total_records: number;
-  change_count: number;
-  avg_value?: number | null;
-}
+import { MonitorSummary } from '@/services/api';
 
 interface StatsChartProps {
-  data: MonitorStats[];
+  data: MonitorSummary[];
   type: 'bar' | 'pie';
 }
 
