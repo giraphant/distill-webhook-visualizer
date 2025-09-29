@@ -85,8 +85,18 @@ const Home: React.FC = () => {
               <p className="text-sm text-muted-foreground mb-3">
                 Set your webhook URL in Distill to:
               </p>
-              <div className="bg-muted p-3 rounded-md">
+              <div className="bg-muted p-3 rounded-md flex items-center justify-between">
                 <code className="text-sm">http://localhost:8000/webhook/distill</code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText('http://localhost:8000/webhook/distill');
+                    alert('Webhook地址已复制到剪贴板！');
+                  }}
+                >
+                  复制
+                </Button>
               </div>
             </div>
             <div>

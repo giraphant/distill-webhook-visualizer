@@ -87,40 +87,40 @@ async def get_monitor_summaries() -> List[MonitorSummary]:
     db = get_db_session()
 
     try:
-        # Get monitor summaries with aggregated data
-        summaries = db.query(
-            MonitoringData.monitor_id,
-            MonitoringData.monitor_name,
-            MonitoringData.url,
-            func.count(MonitoringData.id).label('total_records'),
-            func.min(MonitoringData.value).label('min_value'),
-            func.max(MonitoringData.value).label('max_value'),
-            func.avg(MonitoringData.value).label('avg_value'),
-            func.sum(func.cast(MonitoringData.is_change, 'integer')).label('change_count')
-        ).group_by(
+        # Get unique monitors first
+        unique_monitors = db.query(
             MonitoringData.monitor_id,
             MonitoringData.monitor_name,
             MonitoringData.url
-        ).all()
+        ).distinct().all()
 
         result = []
-        for summary in summaries:
-            # Get latest record for this monitor
-            latest_record = db.query(MonitoringData).filter(
-                MonitoringData.monitor_id == summary.monitor_id
-            ).order_by(desc(MonitoringData.timestamp)).first()
+        for monitor in unique_monitors:
+            # Get stats for this monitor
+            monitor_records = db.query(MonitoringData).filter(
+                MonitoringData.monitor_id == monitor.monitor_id
+            ).all()
+
+            if not monitor_records:
+                continue
+
+            # Calculate stats manually
+            total_records = len(monitor_records)
+            values = [r.value for r in monitor_records if r.value is not None]
+            changes = [r for r in monitor_records if r.is_change]
+            latest_record = max(monitor_records, key=lambda r: r.timestamp)
 
             result.append(MonitorSummary(
-                monitor_id=summary.monitor_id,
-                monitor_name=summary.monitor_name,
-                url=summary.url,
-                total_records=summary.total_records,
-                latest_value=latest_record.value if latest_record else None,
-                latest_timestamp=latest_record.timestamp if latest_record else datetime.utcnow(),
-                min_value=summary.min_value,
-                max_value=summary.max_value,
-                avg_value=float(summary.avg_value) if summary.avg_value else None,
-                change_count=summary.change_count or 0
+                monitor_id=monitor.monitor_id,
+                monitor_name=monitor.monitor_name,
+                url=monitor.url,
+                total_records=total_records,
+                latest_value=latest_record.value,
+                latest_timestamp=latest_record.timestamp,
+                min_value=min(values) if values else None,
+                max_value=max(values) if values else None,
+                avg_value=sum(values) / len(values) if values else None,
+                change_count=len(changes)
             ))
 
         return result
