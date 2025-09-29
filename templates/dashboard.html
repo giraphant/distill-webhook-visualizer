@@ -114,6 +114,55 @@
     </div>
 </div>
 
+<!-- Unit Editor Modal -->
+<div class="modal fade" id="unitEditorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-ruler me-2"></i>
+                    Set Display Unit
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Monitor:</label>
+                    <p id="unit-editor-monitor-name" class="fw-bold"></p>
+                </div>
+                <div class="mb-3">
+                    <label for="unit-input" class="form-label">Unit:</label>
+                    <select class="form-select" id="unit-input">
+                        <option value="">None</option>
+                        <option value="%">% (Percentage)</option>
+                        <option value="$">$ (US Dollar)</option>
+                        <option value="€">€ (Euro)</option>
+                        <option value="£">£ (Pound)</option>
+                        <option value="¥">¥ (Yen)</option>
+                        <option value="ETH">ETH</option>
+                        <option value="BTC">BTC</option>
+                        <option value="SOL">SOL</option>
+                        <option value="USDC">USDC</option>
+                        <option value="USDT">USDT</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="custom-unit-container" style="display:none;">
+                    <label for="custom-unit-input" class="form-label">Custom Unit:</label>
+                    <input type="text" class="form-control" id="custom-unit-input" placeholder="e.g., APY, bps">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveMonitorUnit()">
+                    <i class="fas fa-save me-1"></i>
+                    Save Unit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Comparison Modal -->
 <div class="modal fade" id="comparisonModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -385,6 +434,11 @@ async function loadMonitorDetails(monitorId) {
                         <li><strong>ID:</strong> ${monitor.monitor_id}</li>
                         <li><strong>Name:</strong> ${monitor.monitor_name || 'N/A'}</li>
                         <li><strong>URL:</strong> <a href="${monitor.url}" target="_blank">${monitor.url}</a></li>
+                        <li><strong>Display Unit:</strong> ${monitor.unit || 'None'}
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="openUnitEditor('${monitor.monitor_id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </li>
                     </ul>
                 </div>
                 <div class="col-md-6">
@@ -392,7 +446,7 @@ async function loadMonitorDetails(monitorId) {
                     <ul class="list-unstyled">
                         <li><strong>Total Records:</strong> ${formatNumber(monitor.total_records)}</li>
                         <li><strong>Changes Detected:</strong> ${formatNumber(monitor.change_count)}</li>
-                        <li><strong>Latest Value:</strong> ${monitor.latest_value !== null ? monitor.latest_value : 'N/A'}</li>
+                        <li><strong>Latest Value:</strong> ${monitor.latest_value !== null ? (monitor.latest_value + (monitor.unit ? ' ' + monitor.unit : '')) : 'N/A'}</li>
                         <li><strong>Last Update:</strong> ${formatTimestamp(monitor.latest_timestamp)}</li>
                     </ul>
                 </div>
@@ -499,5 +553,58 @@ async function testWebhook() {
         alert('❌ Error: ' + error.message);
     }
 }
+
+// Unit editor functions
+function openUnitEditor(monitorId) {
+    selectedMonitorId = monitorId;
+    const monitor = currentMonitors.find(m => m.monitor_id === monitorId);
+
+    if (monitor) {
+        document.getElementById('unit-editor-monitor-name').textContent = monitor.monitor_name || monitorId;
+        document.getElementById('unit-input').value = monitor.unit || '';
+
+        const modal = new bootstrap.Modal(document.getElementById('unitEditorModal'));
+        modal.show();
+    }
+}
+
+async function saveMonitorUnit() {
+    let unit = document.getElementById('unit-input').value;
+
+    // Handle custom unit
+    if (unit === 'custom') {
+        unit = document.getElementById('custom-unit-input').value.trim();
+    }
+
+    if (!selectedMonitorId) return;
+
+    try {
+        const response = await fetch(`/api/monitors/${selectedMonitorId}/unit?unit=${encodeURIComponent(unit)}`, {
+            method: 'PATCH',
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Unit updated to '${unit}' successfully!`);
+            bootstrap.Modal.getInstance(document.getElementById('unitEditorModal')).hide();
+            refreshDashboard();
+        } else {
+            alert('❌ Failed to update unit: ' + result.detail);
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+// Show/hide custom unit input
+document.getElementById('unit-input')?.addEventListener('change', function() {
+    const customContainer = document.getElementById('custom-unit-container');
+    if (this.value === 'custom') {
+        customContainer.style.display = 'block';
+    } else {
+        customContainer.style.display = 'none';
+    }
+});
 </script>
 {% endblock %}

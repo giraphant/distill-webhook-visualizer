@@ -54,15 +54,27 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
         url = payload.uri or payload.url
         text_value = payload.text or payload.text_value
 
-        # Try to parse numeric value from text
+        # Try to parse numeric value from text and detect unit
         value = None
+        unit = None
         if text_value:
             try:
-                # Remove commas and try to parse as float
-                clean_text = text_value.replace(',', '')
+                # Detect unit from text
+                if '%' in text_value:
+                    unit = '%'
+                elif '$' in text_value:
+                    unit = '$'
+                elif '€' in text_value:
+                    unit = '€'
+                elif '£' in text_value:
+                    unit = '£'
+
+                # Remove commas, percentage signs, and other common number formatting
+                clean_text = text_value.replace(',', '').replace('%', '').replace('$', '').replace('€', '').replace('£', '').strip()
                 value = float(clean_text)
             except ValueError:
-                # If it's not a number, keep it as text
+                # If it's not a number, keep it as text only
+                logger.debug(f"Could not parse numeric value from: {text_value}")
                 value = payload.value
 
         # Use current timestamp if not provided
@@ -80,6 +92,7 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
             url=url,
             value=value,
             text_value=text_value,
+            unit=unit,
             status=status,
             timestamp=timestamp,
             webhook_received_at=datetime.utcnow(),

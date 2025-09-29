@@ -114,6 +114,7 @@ async def get_monitor_summaries() -> List[MonitorSummary]:
                 monitor_id=monitor.monitor_id,
                 monitor_name=monitor.monitor_name,
                 url=monitor.url,
+                unit=latest_record.unit,
                 total_records=total_records,
                 latest_value=latest_record.value,
                 latest_timestamp=latest_record.timestamp,
@@ -226,6 +227,34 @@ async def delete_monitoring_record(record_id: int) -> Dict[str, Any]:
 
     except HTTPException:
         raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.patch("/monitors/{monitor_id}/unit")
+async def update_monitor_unit(monitor_id: str, unit: str = None) -> Dict[str, Any]:
+    """
+    Update the display unit for all data of a specific monitor.
+    """
+    db = get_db_session()
+
+    try:
+        updated_count = db.query(MonitoringData).filter(
+            MonitoringData.monitor_id == monitor_id
+        ).update({"unit": unit})
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Updated unit to '{unit}' for {updated_count} records",
+            "monitor_id": monitor_id,
+            "unit": unit
+        }
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

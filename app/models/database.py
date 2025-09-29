@@ -33,6 +33,7 @@ class MonitoringData(Base):
     url = Column(String, nullable=False)
     value = Column(Float, nullable=True)
     text_value = Column(Text, nullable=True)
+    unit = Column(String, nullable=True)  # Unit for display (%, $, ETH, etc.)
     status = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False)
     webhook_received_at = Column(DateTime, default=datetime.utcnow)
@@ -73,6 +74,7 @@ class MonitoringDataResponse(BaseModel):
     url: str
     value: Optional[float]
     text_value: Optional[str]
+    unit: Optional[str]
     status: str
     timestamp: datetime
     webhook_received_at: datetime
@@ -89,6 +91,7 @@ class MonitorSummary(BaseModel):
     monitor_id: str
     monitor_name: Optional[str]
     url: str
+    unit: Optional[str]
     total_records: int
     latest_value: Optional[float]
     latest_timestamp: datetime
