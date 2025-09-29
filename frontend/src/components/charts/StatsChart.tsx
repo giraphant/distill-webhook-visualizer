@@ -16,7 +16,7 @@ interface MonitorStats {
   monitor_name: string;
   total_records: number;
   change_count: number;
-  avg_value?: number;
+  avg_value?: number | null;
 }
 
 interface StatsChartProps {

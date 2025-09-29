@@ -88,21 +88,7 @@ const LineChart: React.FC<LineChartProps> = ({
             type="monotone"
             dataKey="value"
             stroke="transparent"
-            dot={(props: any) => {
-              if (props.payload.is_change) {
-                return (
-                  <circle
-                    cx={props.cx}
-                    cy={props.cy}
-                    r={6}
-                    fill="#f59e0b"
-                    stroke="#d97706"
-                    strokeWidth={2}
-                  />
-                );
-              }
-              return null;
-            }}
+            dot={false}
             name="Changes"
           />
         </RechartsLineChart>
