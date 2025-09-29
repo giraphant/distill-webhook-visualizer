@@ -47,13 +47,19 @@ class MonitoringData(Base):
 # Pydantic models for API
 class DistillWebhookPayload(BaseModel):
     """Expected payload from Distill webhook."""
-    monitor_id: str
+    id: str  # Distill uses 'id' as monitor identifier
+    name: Optional[str] = None  # Distill monitor name
+    uri: str  # Distill uses 'uri' for the monitored URL
+    text: str  # Distill sends the extracted value as 'text'
+
+    # Optional fields for backwards compatibility
+    monitor_id: Optional[str] = None
     monitor_name: Optional[str] = None
-    url: str
+    url: Optional[str] = None
     value: Optional[float] = None
     text_value: Optional[str] = None
-    status: str
-    timestamp: str
+    status: Optional[str] = None
+    timestamp: Optional[str] = None
     is_change: Optional[bool] = False
     change_type: Optional[str] = None
     previous_value: Optional[float] = None

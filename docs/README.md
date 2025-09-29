@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains detailed documentation for the Distill Webhook Visualizer project.
+This directory contains detailed documentation for the Distill Webhook Visualiser project.
 
 ## Available Documentation
 

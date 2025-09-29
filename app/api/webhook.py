@@ -3,11 +3,12 @@ Webhook API endpoints for receiving Distill monitoring data.
 """
 
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Dict, Any
 import logging
+import json
 
 from app.models.database import (
     MonitoringData,
@@ -47,17 +48,39 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
     db = get_db_session()
 
     try:
-        # Parse timestamp
-        timestamp = parse_timestamp(payload.timestamp)
+        # Map Distill fields to our database fields
+        monitor_id = payload.id or payload.monitor_id
+        monitor_name = payload.name or payload.monitor_name
+        url = payload.uri or payload.url
+        text_value = payload.text or payload.text_value
+
+        # Try to parse numeric value from text
+        value = None
+        if text_value:
+            try:
+                # Remove commas and try to parse as float
+                clean_text = text_value.replace(',', '')
+                value = float(clean_text)
+            except ValueError:
+                # If it's not a number, keep it as text
+                value = payload.value
+
+        # Use current timestamp if not provided
+        timestamp = datetime.utcnow()
+        if payload.timestamp:
+            timestamp = parse_timestamp(payload.timestamp)
+
+        # Default status for Distill data
+        status = payload.status or "monitored"
 
         # Create database record
         db_record = MonitoringData(
-            monitor_id=payload.monitor_id,
-            monitor_name=payload.monitor_name,
-            url=payload.url,
-            value=payload.value,
-            text_value=payload.text_value,
-            status=payload.status,
+            monitor_id=monitor_id,
+            monitor_name=monitor_name,
+            url=url,
+            value=value,
+            text_value=text_value,
+            status=status,
             timestamp=timestamp,
             webhook_received_at=datetime.utcnow(),
             is_change=payload.is_change or False,
@@ -69,7 +92,7 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
         db.commit()
         db.refresh(db_record)
 
-        logger.info(f"Saved monitoring data: monitor_id={payload.monitor_id}, value={payload.value}")
+        logger.info(f"Saved monitoring data: monitor_id={monitor_id}, value={value}, text={text_value}")
         return db_record
 
     except SQLAlchemyError as e:
@@ -80,9 +103,49 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
         db.close()
 
 
+@router.post("/distill-debug")
+async def receive_distill_webhook_debug(request: Request) -> Dict[str, Any]:
+    """
+    Debug endpoint to capture raw Distill webhook payloads.
+
+    This endpoint logs the raw payload to help debug format mismatches.
+    """
+    try:
+        # Get raw body
+        body = await request.body()
+        raw_payload = body.decode('utf-8')
+
+        # Try to parse as JSON
+        try:
+            json_payload = json.loads(raw_payload)
+            logger.info(f"RAW DISTILL PAYLOAD (JSON): {json.dumps(json_payload, indent=2)}")
+        except json.JSONDecodeError:
+            logger.info(f"RAW DISTILL PAYLOAD (TEXT): {raw_payload}")
+
+        # Log headers
+        headers = dict(request.headers)
+        logger.info(f"DISTILL HEADERS: {json.dumps(headers, indent=2)}")
+
+        return {
+            "status": "success",
+            "message": "Debug payload logged",
+            "payload_length": len(raw_payload),
+            "content_type": request.headers.get("content-type"),
+            "received_at": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Error in debug webhook: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "received_at": datetime.utcnow().isoformat()
+        }
+
+
 @router.post("/distill")
 async def receive_distill_webhook(
-    payload: DistillWebhookPayload,
+    request: Request,
     background_tasks: BackgroundTasks
 ) -> Dict[str, Any]:
     """
@@ -92,15 +155,44 @@ async def receive_distill_webhook(
     The data is processed in the background to ensure fast response times.
     """
     try:
-        # Validate required fields
-        if not payload.monitor_id:
-            raise HTTPException(status_code=400, detail="monitor_id is required")
-        if not payload.url:
-            raise HTTPException(status_code=400, detail="url is required")
-        if not payload.status:
-            raise HTTPException(status_code=400, detail="status is required")
-        if not payload.timestamp:
-            raise HTTPException(status_code=400, detail="timestamp is required")
+        # Get raw body first for debugging
+        body = await request.body()
+        raw_payload = body.decode('utf-8')
+
+        # Log raw payload and headers for debugging
+        headers = dict(request.headers)
+        logger.info(f"RAW DISTILL WEBHOOK PAYLOAD: {raw_payload}")
+        logger.info(f"DISTILL WEBHOOK HEADERS: {json.dumps(headers, indent=2)}")
+
+        # Try to parse as JSON
+        try:
+            json_data = json.loads(raw_payload)
+            logger.info(f"PARSED JSON PAYLOAD: {json.dumps(json_data, indent=2)}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON: {e}")
+            raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+        # Try to validate with Pydantic model
+        try:
+            payload = DistillWebhookPayload(**json_data)
+            logger.info(f"VALIDATED PAYLOAD: {payload.model_dump_json()}")
+        except Exception as e:
+            logger.error(f"Pydantic validation failed: {e}")
+            logger.error(f"Expected fields: monitor_id, url, status, timestamp")
+            logger.error(f"Received fields: {list(json_data.keys())}")
+            raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
+
+        # Validate required fields (for Distill format)
+        monitor_id = payload.id or payload.monitor_id
+        url = payload.uri or payload.url
+        text = payload.text or payload.text_value
+
+        if not monitor_id:
+            raise HTTPException(status_code=400, detail="id or monitor_id is required")
+        if not url:
+            raise HTTPException(status_code=400, detail="uri or url is required")
+        if not text:
+            raise HTTPException(status_code=400, detail="text or text_value is required")
 
         # Save data synchronously (for now)
         saved_record = save_monitoring_data(payload)

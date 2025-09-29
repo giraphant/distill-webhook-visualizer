@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Deploy & Manage - Distill Webhook Visualizer{% endblock %}
+{% block title %}Deploy & Manage - Distill Webhook Visualiser{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -430,9 +430,9 @@ function deployLocal() {
 function deployDocker() {
     const output = document.getElementById('terminal-output');
     output.innerHTML += '<div class="text-info">🐳 Starting Docker deployment...</div>';
-    output.innerHTML += '<div class="text-muted">$ docker build -t distill-visualizer .</div>';
+    output.innerHTML += '<div class="text-muted">$ docker build -t distill-visualiser .</div>';
     output.innerHTML += '<div class="text-success">✅ Docker image built successfully</div>';
-    output.innerHTML += '<div class="text-muted">$ docker run -p 8000:8000 distill-visualizer</div>';
+    output.innerHTML += '<div class="text-muted">$ docker run -p 8000:8000 distill-visualiser</div>';
     output.innerHTML += '<div class="text-success">✅ Docker container started on port 8000</div>';
     output.innerHTML += '<div class="text-info">🌐 Access at: http://localhost:8000</div>';
     output.scrollTop = output.scrollHeight;
@@ -451,21 +451,21 @@ function deployProduction() {
 
 // Service management functions
 function startService() {
-    executeCommand('systemctl start distill-webhook-visualizer', 'terminal-output');
+    executeCommand('systemctl start distill-webhook-visualiser', 'terminal-output');
 }
 
 function restartService() {
-    executeCommand('systemctl restart distill-webhook-visualizer', 'terminal-output');
+    executeCommand('systemctl restart distill-webhook-visualiser', 'terminal-output');
 }
 
 function stopService() {
-    executeCommand('systemctl stop distill-webhook-visualizer', 'terminal-output');
+    executeCommand('systemctl stop distill-webhook-visualiser', 'terminal-output');
 }
 
 function viewLogs() {
     const output = document.getElementById('terminal-output');
     output.innerHTML += '<div class="text-info">📋 Viewing application logs...</div>';
-    output.innerHTML += '<div class="text-muted">$ tail -f /var/log/distill-visualizer.log</div>';
+    output.innerHTML += '<div class="text-muted">$ tail -f /var/log/distill-visualiser.log</div>';
     output.innerHTML += '<div class="text-white">2023-12-28 10:15:32 INFO: Application started successfully</div>';
     output.innerHTML += '<div class="text-white">2023-12-28 10:15:33 INFO: Database connected</div>';
     output.innerHTML += '<div class="text-white">2023-12-28 10:15:34 INFO: Webhook endpoint ready</div>';

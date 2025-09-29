@@ -52,7 +52,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "service": "distill-webhook-visualizer-api",
+        "service": "distill-webhook-visualiser-api",
         "version": "2.0.0"
     }
 

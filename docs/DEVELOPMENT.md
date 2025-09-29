@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide covers development setup, architecture details, and contribution guidelines for the Distill Webhook Visualizer.
+This guide covers development setup, architecture details, and contribution guidelines for the Distill Webhook Visualiser.
 
 ## 🏗️ Architecture Overview
 
@@ -40,8 +40,8 @@ backend/
 
 ### 1. Clone and Setup
 ```bash
-git clone https://github.com/giraphant/distill-webhook-visualizer.git
-cd distill-webhook-visualizer
+git clone https://github.com/giraphant/distill-webhook-visualiser.git
+cd distill-webhook-visualiser
 ```
 
 ### 2. Backend Development Setup
@@ -387,4 +387,4 @@ pip freeze > requirements.txt
 - [ ] Breaking changes documented
 ```
 
-This development guide should help you get started with contributing to the Distill Webhook Visualizer project!
+This development guide should help you get started with contributing to the Distill Webhook Visualiser project!

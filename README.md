@@ -1,4 +1,4 @@
-# Distill Webhook Visualizer
+# Distill Webhook Visualiser
 
 A powerful, production-ready web application for receiving, storing, and visualizing data from Distill Web Monitor webhooks in real-time.
 
@@ -17,8 +17,8 @@ A powerful, production-ready web application for receiving, storing, and visuali
 ### Docker (Recommended)
 
 ```bash
-git clone https://github.com/giraphant/distill-webhook-visualizer.git
-cd distill-webhook-visualizer
+git clone https://github.com/giraphant/distill-webhook-visualiser.git
+cd distill-webhook-visualiser
 
 # Start with Docker Compose
 docker-compose up --build -d
@@ -81,7 +81,7 @@ curl -X POST "http://localhost:8000/webhook/distill" \
 ## 📁 Project Structure
 
 ```
-distill-webhook-visualizer/
+distill-webhook-visualiser/
 ├── app/
 │   ├── api/              # API route handlers
 │   ├── models/           # Database models

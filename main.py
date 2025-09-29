@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Distill Webhook Visualizer
+Distill Webhook Visualiser
 Main application entry point.
 """
 
@@ -19,8 +19,8 @@ from app.models.database import create_tables
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Distill Webhook Visualizer",
-    description="Receive, store, and visualize Distill Web Monitor data",
+    title="Distill Webhook Visualiser",
+    description="Receive, store, and visualise Distill Web Monitor data",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -59,7 +59,7 @@ async def startup_event():
     protocol = "https" if domain != "localhost" else "http"
     base_url = f"{protocol}://{domain}" if domain != "localhost" else f"http://localhost:{port}"
 
-    print("🚀 Distill Webhook Visualizer started successfully!")
+    print("🚀 Distill Webhook Visualiser started successfully!")
     print(f"📡 Webhook endpoint: {base_url}/webhook/distill")
     print(f"🌐 Dashboard: {base_url}/dashboard")
     print(f"📚 API Docs: {base_url}/docs")
@@ -86,7 +86,7 @@ async def deploy(request: Request):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "distill-webhook-visualizer"}
+    return {"status": "healthy", "service": "distill-webhook-visualiser"}
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 ## 项目结构
 
 ```
-distill-webhook-visualizer/
+distill-webhook-visualiser/
 ├── backend/                 # FastAPI 后端服务
 │   ├── app/
 │   │   ├── api/            # API 路由

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 # Webhook endpoint
-WEBHOOK_URL = "http://localhost:8000/webhook/distill"
+WEBHOOK_URL = "http://localhost:9988/webhook/distill"
 
 # 模拟监控器配置
 MONITORS = [
