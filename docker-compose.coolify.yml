@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  distill-webhook-visualizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: distill-webhook-visualizer
+    environment:
+      # Application Settings
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./data/monitoring.db
+      - LOG_LEVEL=info
+
+      # Domain Configuration (Coolify will inject this automatically)
+      - DOMAIN=${DOMAIN:-distill.quasifi.sh}
+      - CORS_ORIGINS=https://${DOMAIN:-distill.quasifi.sh}
+
+      # Security (CHANGE THIS IN PRODUCTION!)
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+
+      # Python Environment
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+    volumes:
+      # Persistent data storage
+      - distill_data:/app/data
+      - distill_logs:/app/logs
+
+    ports:
+      - "8000:8000"
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    labels:
+      # Coolify labels for automatic configuration
+      - "coolify.managed=true"
+      - "coolify.version=1.0"
+      - "coolify.type=application"
+
+volumes:
+  distill_data:
+    driver: local
+  distill_logs:
+    driver: local
+
+networks:
+  default:
+    name: distill-network
