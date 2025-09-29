@@ -27,16 +27,20 @@ app = FastAPI(
 )
 
 # Add CORS middleware for frontend access
+domain = os.getenv("DOMAIN", "localhost")
+cors_origins = os.getenv("CORS_ORIGINS", f"https://{domain},http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files (with check for directory existence)
+import os
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates
 templates = Jinja2Templates(directory="templates")
@@ -50,10 +54,15 @@ app.include_router(data_router, prefix="/api", tags=["data"])
 async def startup_event():
     """Initialize database on startup."""
     create_tables()
+    domain = os.getenv("DOMAIN", "localhost")
+    port = os.getenv("PORT", "8000")
+    protocol = "https" if domain != "localhost" else "http"
+    base_url = f"{protocol}://{domain}" if domain != "localhost" else f"http://localhost:{port}"
+
     print("🚀 Distill Webhook Visualizer started successfully!")
-    print("📡 Webhook endpoint: http://localhost:8000/webhook/distill")
-    print("🌐 Dashboard: http://localhost:8000/dashboard")
-    print("📚 API Docs: http://localhost:8000/docs")
+    print(f"📡 Webhook endpoint: {base_url}/webhook/distill")
+    print(f"🌐 Dashboard: {base_url}/dashboard")
+    print(f"📚 API Docs: {base_url}/docs")
 
 
 @app.get("/", response_class=HTMLResponse)

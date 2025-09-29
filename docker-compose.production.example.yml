@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  distill-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: distill-webhook-visualizer
+    env_file:
+      - .env.production
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./data/monitoring.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8080:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  data:
+    driver: local
+  logs:
+    driver: local
+
+networks:
+  default:
+    name: distill-network
