@@ -14,88 +14,63 @@ A powerful, production-ready web application for receiving, storing, and visuali
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+### Docker (Recommended)
 
 ```bash
 git clone https://github.com/giraphant/distill-webhook-visualizer.git
 cd distill-webhook-visualizer
 
-# Start with Docker
-docker build -t distill-visualizer .
-docker run -p 8000:8000 distill-visualizer
+# Start with Docker Compose
+docker-compose up --build -d
 ```
 
-### Option 2: Local Development
+### Local Development
 
 ```bash
-git clone https://github.com/giraphant/distill-webhook-visualizer.git
-cd distill-webhook-visualizer
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the application
 python main.py
 ```
 
 ## 🔧 Configuration
 
-### Environment Variables
-
-Create a `.env` file from the template:
+Create a `.env` file:
 
 ```bash
-cp .env.example .env
+# Application Settings
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:///./data/monitoring.db
+LOG_LEVEL=info
+
+# Security (change in production)
+SECRET_KEY=your-secure-secret-key-here
+
+# Domain (for CORS)
+DOMAIN=your-domain.com
+CORS_ORIGINS=https://your-domain.com
 ```
-
-### Distill Setup
-
-1. **Configure Webhook URL**: Set your Distill webhook to:
-   ```
-   http://your-server:8000/webhook/distill
-   ```
-
-2. **Expected Payload Format**:
-   ```json
-   {
-     "monitor_id": "unique_monitor_id",
-     "monitor_name": "My Website Monitor",
-     "url": "https://example.com",
-     "value": 123.45,
-     "status": "changed",
-     "timestamp": "2023-01-01T12:00:00Z",
-     "is_change": true
-   }
-   ```
 
 ## 🔌 API Endpoints
 
 ### Webhook Endpoints
 - `POST /webhook/distill` - Receive Distill webhook data
-- `POST /webhook/test` - Test webhook functionality
-- `GET /webhook/status` - Get webhook service status
+- `GET /health` - Application health check
 
 ### Data API
 - `GET /api/data` - Retrieve monitoring data with filtering
 - `GET /api/monitors` - Get monitor summaries and statistics
 - `GET /api/chart-data/{monitor_id}` - Get chart-ready data
 
-### Management
-- `GET /health` - Application health check
-- `DELETE /api/data/{record_id}` - Delete specific record
-- `DELETE /api/monitors/{monitor_id}` - Delete all monitor data
-
 Full API documentation available at: `http://localhost:8000/docs`
 
-## 🧪 Testing
-
-Send test data to verify setup:
+## 🧪 Testing the Webhook
 
 ```bash
 curl -X POST "http://localhost:8000/webhook/distill" \
   -H "Content-Type: application/json" \
   -d '{
     "monitor_id": "test_monitor",
+    "monitor_name": "Test Monitor",
     "url": "https://example.com",
     "value": 42.5,
     "status": "ok",
@@ -112,26 +87,18 @@ distill-webhook-visualizer/
 │   ├── models/           # Database models
 │   └── visualization/    # Chart generation
 ├── templates/            # HTML templates
-├── scripts/             # Deployment scripts
 ├── main.py              # Application entry point
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile           # Docker configuration
-└── README.md           # This file
+└── docker-compose.yml  # Docker Compose setup
 ```
 
-## 🤝 Contributing
+## 🌐 Production Deployment
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+For production deployment with custom domains and SSL certificates, configure your reverse proxy (nginx/Traefik) to point to the application container.
+
+The application is designed to work seamlessly with container orchestration platforms like Coolify, Docker Swarm, or Kubernetes.
 
 ## 📄 License
 
 This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- Built with [FastAPI](https://fastapi.tiangolo.com/) and [Plotly](https://plotly.com/)
-- Designed for [Distill Web Monitor](https://distill.io/)
