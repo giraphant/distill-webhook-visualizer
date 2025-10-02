@@ -309,17 +309,30 @@ function App() {
     return unit ? `${formatted} ${unit}` : formatted;
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validUsername = 'ramu';
-    const validPassword = 'oQEemIm4XfD36htsDgXhjQ==';
+    setLoginError('');
 
-    if (username === validUsername && password === validPassword) {
-      localStorage.setItem('auth', 'authenticated');
-      setIsAuthenticated(true);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid username or password');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('auth', 'authenticated');
+        localStorage.setItem('username', username);
+        setIsAuthenticated(true);
+        setLoginError('');
+      } else {
+        setLoginError(data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      setLoginError('Failed to connect to server');
     }
   };
 

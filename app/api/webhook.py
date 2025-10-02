@@ -69,13 +69,44 @@ def save_monitoring_data(payload: DistillWebhookPayload) -> MonitoringData:
                 elif '£' in text_value:
                     unit = '£'
 
-                # Remove commas, percentage signs, and other common number formatting
+                # Remove commas, percentage signs, currency symbols
                 clean_text = text_value.replace(',', '').replace('%', '').replace('$', '').replace('€', '').replace('£', '').strip()
-                value = float(clean_text)
+
+                # Handle k (thousands) and m (millions) suffixes
+                multiplier = 1
+                if clean_text.lower().endswith('k'):
+                    multiplier = 1000
+                    clean_text = clean_text[:-1].strip()
+                elif clean_text.lower().endswith('m'):
+                    multiplier = 1000000
+                    clean_text = clean_text[:-1].strip()
+                elif clean_text.lower().endswith('b'):
+                    multiplier = 1000000000
+                    clean_text = clean_text[:-1].strip()
+
+                value = float(clean_text) * multiplier
             except ValueError:
                 # If it's not a number, keep it as text only
                 logger.debug(f"Could not parse numeric value from: {text_value}")
                 value = payload.value
+
+        # Apply formula if configured for this monitor
+        if value is not None and monitor_id:
+            from app.models.database import AlertConfig
+            alert_config = db.query(AlertConfig).filter(
+                AlertConfig.monitor_id == monitor_id
+            ).first()
+
+            if alert_config and alert_config.formula:
+                try:
+                    # Apply formula (e.g. "x * 365")
+                    expression = alert_config.formula.replace('x', str(value))
+                    transformed_value = eval(expression, {"__builtins__": {}}, {})
+                    if isinstance(transformed_value, (int, float)) and not isinstance(transformed_value, bool):
+                        value = float(transformed_value)
+                        logger.info(f"Applied formula '{alert_config.formula}' to {monitor_id}: {value}")
+                except Exception as e:
+                    logger.warning(f"Failed to apply formula '{alert_config.formula}' to {monitor_id}: {e}")
 
         # Use current timestamp if not provided
         timestamp = datetime.utcnow()

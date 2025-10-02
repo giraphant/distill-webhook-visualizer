@@ -32,6 +32,10 @@ COPY . .
 # Create required directories
 RUN mkdir -p data static logs
 
+# Copy and set entrypoint (before switching to non-root user)
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser \
     && chown -R appuser:appuser /app
@@ -45,4 +49,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
-CMD ["python", "main.py"]
+CMD ["/docker-entrypoint.sh"]
