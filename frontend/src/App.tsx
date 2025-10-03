@@ -382,15 +382,16 @@ function App() {
     // Create a map of saved layouts by id
     const savedLayoutMap = new Map(savedLayout.map(l => [l.i, l]));
 
-    // Find the highest y position in saved layout
-    let maxY = savedLayout.length > 0 ? Math.max(...savedLayout.map(l => l.y + l.h)) : 0;
-
-    // Process monitors
+    // Process monitors first
     const monitorLayouts = monitors.map((monitor, index) => {
       if (savedLayoutMap.has(monitor.monitor_id)) {
         return savedLayoutMap.get(monitor.monitor_id);
       } else {
-        // New monitor - add it at the bottom
+        // New monitor - calculate position
+        // Find the highest y position from existing layouts
+        const existingLayouts = Array.from(savedLayoutMap.values());
+        const maxY = existingLayouts.length > 0 ? Math.max(...existingLayouts.map(l => l.y + l.h)) : 0;
+
         let w = 1, h = 1;
         if (index % 7 === 0) { w = 2; h = 2; }
         else if (index % 5 === 0) { w = 2; h = 1; }
@@ -406,18 +407,22 @@ function App() {
           maxW: 4,
           maxH: 3
         };
-        maxY += h;
+        // Add to saved layout map so next new items can use this position
+        savedLayoutMap.set(monitor.monitor_id, newLayout);
         return newLayout;
       }
     });
 
     // Process constants
-    const constantLayouts = constants.map((constant) => {
+    const constantLayouts = constants.map((constant, index) => {
       const constId = `const-${constant.id}`;
       if (savedLayoutMap.has(constId)) {
         return savedLayoutMap.get(constId);
       } else {
-        // New constant - add it at the bottom
+        // New constant - calculate position
+        const existingLayouts = Array.from(savedLayoutMap.values());
+        const maxY = existingLayouts.length > 0 ? Math.max(...existingLayouts.map(l => l.y + l.h)) : 0;
+
         const newLayout = {
           i: constId,
           x: 0,
@@ -429,7 +434,8 @@ function App() {
           maxW: 4,
           maxH: 3
         };
-        maxY += 1;
+        // Add to saved layout map so next new items can use this position
+        savedLayoutMap.set(constId, newLayout);
         return newLayout;
       }
     });
