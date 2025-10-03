@@ -20,8 +20,11 @@ services:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./static:/app/static
-    ports:
-      - "9988:9988"
+    # Coolify manages port mapping through its reverse proxy
+    # ports:
+    #   - "9988:9988"
+    expose:
+      - "9988"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9988/health"]
