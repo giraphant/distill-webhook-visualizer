@@ -312,7 +312,9 @@ function App() {
 
   const formatTimeSince = (timestamp: string) => {
     const now = new Date();
-    const then = new Date(timestamp);
+    // Database stores UTC time without 'Z' suffix, so we need to append it
+    const timestampUTC = timestamp.endsWith('Z') ? timestamp : timestamp + 'Z';
+    const then = new Date(timestampUTC);
     const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
 
     if (seconds < 60) return `${seconds}s ago`;
@@ -1062,7 +1064,7 @@ function App() {
 
                   <div className={`bento-value ${isAlert ? 'alert' : ''}`}>
                     {formatValue(monitor.latest_value, monitor.unit)}
-                    <div className="last-updated" title={new Date(monitor.latest_timestamp).toLocaleString()}>
+                    <div className="last-updated" title={new Date((monitor.latest_timestamp.endsWith('Z') ? monitor.latest_timestamp : monitor.latest_timestamp + 'Z')).toLocaleString()}>
                       {formatTimeSince(monitor.latest_timestamp)}
                     </div>
                   </div>
