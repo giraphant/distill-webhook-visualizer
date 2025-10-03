@@ -891,15 +891,18 @@ header p {
 
 /* Constant cards should keep horizontal layout (no timestamp) */
 .bento-value.constant-value {
+  display: inline-flex;
   flex-direction: row;
   align-items: baseline;
 }
 
 .unit-text {
-  font-size: 0.5em;
+  font-size: 0.55em;
   margin-left: 6px;
   font-weight: 500;
   opacity: 0.8;
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 /* 有折线图的卡片,数字不居中而是固定位置 */
