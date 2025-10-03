@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Settings, Moon, Sun, LayoutGrid, LineChart as LineChartIcon, Bell, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Settings, Moon, Sun, LayoutGrid, LineChart as LineChartIcon, Bell, Plus, Pencil, Trash2, TrendingUp } from 'lucide-react';
 import GridLayout from 'react-grid-layout';
 import ManageMonitorItem from './ManageMonitorItem';
 import ConstantCardModal from './ConstantCardModal';
+import DexRates from './DexRates';
 import './App.css';
 import 'react-grid-layout/css/styles.css';
 
@@ -86,7 +87,7 @@ function App() {
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [monitorNames, setMonitorNames] = useState<Map<string, string>>(new Map());
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [viewMode, setViewMode] = useState<'overview' | 'detail'>('overview');
+  const [viewMode, setViewMode] = useState<'overview' | 'detail' | 'dex'>('overview');
   const [gridLayout, setGridLayout] = useState<any[]>([]);
   const [miniChartData, setMiniChartData] = useState<Map<string, any[]>>(new Map());
   const [thresholds, setThresholds] = useState<Map<string, {upper?: number, lower?: number, level?: string}>>(new Map());
@@ -437,6 +438,9 @@ function App() {
   };
 
   const onLayoutChange = (layout: any[]) => {
+    // Don't save layout changes on mobile to prevent constants from moving to bottom
+    if (isMobile) return;
+
     setGridLayout(layout);
     localStorage.setItem('gridLayout', JSON.stringify(layout));
   };
@@ -853,6 +857,14 @@ function App() {
               <LineChartIcon size={18} />
             </button>
             <button
+              className={`btn-secondary ${viewMode === 'dex' ? 'active' : ''}`}
+              onClick={() => setViewMode('dex')}
+              title="DEX Rates"
+              style={{ padding: '8px 12px' }}
+            >
+              <TrendingUp size={18} />
+            </button>
+            <button
               className="btn-secondary"
               onClick={toggleDarkMode}
               title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -1139,6 +1151,8 @@ function App() {
             <Plus size={20} />
           </button>
         </div>
+      ) : viewMode === 'dex' ? (
+        <DexRates />
       ) : (
         <div className="dashboard">
           {/* Sidebar */}

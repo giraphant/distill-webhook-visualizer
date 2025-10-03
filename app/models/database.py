@@ -80,7 +80,6 @@ class AlertConfig(Base):
     upper_threshold = Column(Float, nullable=True)
     lower_threshold = Column(Float, nullable=True)
     alert_level = Column(String, default='medium')  # critical, high, medium, low
-    formula = Column(String, nullable=True)  # Formula to apply on webhook data (e.g. "x * 365")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

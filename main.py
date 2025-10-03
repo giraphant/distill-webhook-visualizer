@@ -17,6 +17,7 @@ from app.api.data import router as data_router
 from app.api.alerts import router as alerts_router
 from app.api.constants import router as constants_router
 from app.api.auth import router as auth_router
+from app.api.dex import router as dex_router
 from app.models.database import create_tables, get_db_session, User
 
 
@@ -49,12 +50,45 @@ app.include_router(webhook_router, prefix="/webhook", tags=["webhooks"])
 app.include_router(data_router, prefix="/api", tags=["data"])
 app.include_router(alerts_router, prefix="/api", tags=["alerts"])
 app.include_router(constants_router, prefix="/api", tags=["constants"])
+app.include_router(dex_router, prefix="/api", tags=["dex"])
 
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize database on startup."""
     create_tables()
+
+    # Remove formula column if it exists (SQLite migration)
+    import sqlite3
+    try:
+        conn = sqlite3.connect('data/monitoring.db')
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(alert_configs)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'formula' in columns:
+            # SQLite doesn't support DROP COLUMN, so recreate the table
+            cursor.execute("""
+                CREATE TABLE alert_configs_new (
+                    monitor_id TEXT PRIMARY KEY,
+                    upper_threshold REAL,
+                    lower_threshold REAL,
+                    alert_level TEXT DEFAULT 'medium',
+                    created_at TIMESTAMP,
+                    updated_at TIMESTAMP
+                )
+            """)
+            cursor.execute("""
+                INSERT INTO alert_configs_new (monitor_id, upper_threshold, lower_threshold, alert_level, created_at, updated_at)
+                SELECT monitor_id, upper_threshold, lower_threshold, alert_level, created_at, updated_at
+                FROM alert_configs
+            """)
+            cursor.execute("DROP TABLE alert_configs")
+            cursor.execute("ALTER TABLE alert_configs_new RENAME TO alert_configs")
+            conn.commit()
+            print("✓ Removed formula column from alert_configs")
+        conn.close()
+    except Exception as e:
+        print(f"Migration note: {e}")
 
     # Create initial users if no users exist
     db = get_db_session()
@@ -125,13 +159,14 @@ async def health_check():
 import os
 from fastapi.responses import FileResponse
 
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount the nested static directory from React build
+if os.path.exists("static/static"):
+    app.mount("/static", StaticFiles(directory="static/static"), name="static")
 
-# Catch-all route to serve React app (must be last!)
-@app.get("/{full_path:path}", response_class=HTMLResponse)
-async def serve_react_app(full_path: str):
-    """Serve React app for all other routes."""
+# Serve React app for specific frontend routes only
+@app.get("/", response_class=HTMLResponse)
+async def serve_home():
+    """Serve React app home page."""
     index_path = "static/index.html"
     if os.path.exists(index_path):
         with open(index_path, "r") as f:
@@ -148,6 +183,6 @@ if __name__ == "__main__":
         "main:app",
         host=host,
         port=port,
-        reload=True,
+        reload=False,
         log_level="info"
     )

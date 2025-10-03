@@ -23,7 +23,6 @@ class AlertConfigCreate(BaseModel):
     upper_threshold: Optional[float] = None
     lower_threshold: Optional[float] = None
     alert_level: str = 'medium'
-    formula: Optional[str] = None
 
 
 class AlertConfigResponse(BaseModel):
@@ -31,7 +30,6 @@ class AlertConfigResponse(BaseModel):
     upper_threshold: Optional[float]
     lower_threshold: Optional[float]
     alert_level: str
-    formula: Optional[str]
     created_at: datetime
     updated_at: datetime
 
@@ -78,7 +76,6 @@ def create_or_update_alert_config(
         existing.upper_threshold = config.upper_threshold
         existing.lower_threshold = config.lower_threshold
         existing.alert_level = config.alert_level
-        existing.formula = config.formula
         existing.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(existing)
@@ -89,8 +86,7 @@ def create_or_update_alert_config(
             monitor_id=config.monitor_id,
             upper_threshold=config.upper_threshold,
             lower_threshold=config.lower_threshold,
-            alert_level=config.alert_level,
-            formula=config.formula
+            alert_level=config.alert_level
         )
         db.add(new_config)
         db.commit()

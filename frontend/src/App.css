@@ -1495,3 +1495,281 @@ header p {
     height: 48px;
   }
 }
+
+/* DEX Rates Styles */
+.dex-rates-container {
+  padding: 24px 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dex-rates-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-left h2 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.last-updated {
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.refresh-btn:hover {
+  opacity: 0.9;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dex-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.sort-buttons button {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.sort-buttons button:hover {
+  background: var(--muted);
+}
+
+.sort-buttons button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.exchange-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.exchange-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.exchange-checkbox:hover {
+  background: var(--muted);
+  border-color: var(--primary);
+}
+
+.exchange-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.exchange-checkbox input[type="checkbox"]:checked ~ span {
+  font-weight: 600;
+  color: white;
+}
+
+.exchange-checkbox:has(input[type="checkbox"]:checked) {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.exchange-checkbox span {
+  color: var(--foreground);
+  transition: all 0.2s;
+}
+
+.error-message {
+  padding: 16px;
+  background: var(--destructive);
+  color: white;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 48px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+}
+
+.dex-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.dex-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+}
+
+.dex-table thead {
+  background: var(--muted);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dex-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted-foreground);
+  border-bottom: 2px solid var(--border);
+  transition: background 0.2s;
+}
+
+.dex-table th[style*="cursor"] {
+  position: relative;
+}
+
+.dex-table th[style*="cursor"]:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.dex-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.dex-table tbody tr:hover {
+  background: var(--muted);
+}
+
+.dex-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.symbol-cell {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.spread-cell {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dex-footer {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .dex-rates-container {
+    padding: 16px;
+  }
+
+  .dex-rates-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dex-filters {
+    flex-direction: column;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .sort-buttons {
+    width: 100%;
+  }
+
+  .sort-buttons button {
+    flex: 1;
+  }
+
+  .dex-table {
+    font-size: 12px;
+  }
+
+  .dex-table th,
+  .dex-table td {
+    padding: 8px;
+  }
+}
