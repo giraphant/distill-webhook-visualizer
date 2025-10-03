@@ -1158,7 +1158,7 @@ function App() {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
-                  {constant.unit && <sub className="unit-subscript">{constant.unit}</sub>}
+                  {constant.unit && <span className="unit-text">{constant.unit}</span>}
                 </div>
 
                 <div className="bento-stats" style={{ opacity: 0.5 }}>
