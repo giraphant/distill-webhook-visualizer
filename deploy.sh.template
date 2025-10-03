@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Starting deployment process..."
+
+# Configuration
+COOLIFY_API_TOKEN="YOUR_COOLIFY_API_TOKEN_HERE"
+COOLIFY_URL="${COOLIFY_URL:-http://localhost:8000}"  # Coolify runs on port 8000
+APPLICATION_UUID="${APPLICATION_UUID:-y0cgo840wccc44sccw4wkoks}"  # Override if needed
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}📦 Building frontend...${NC}"
+cd /home/distill-webhook-visualizer/frontend
+npm run build
+
+echo -e "${BLUE}📋 Copying build to static directory...${NC}"
+cp -r build/* /home/distill-webhook-visualizer/static/
+
+echo -e "${BLUE}📝 Committing changes...${NC}"
+cd /home/distill-webhook-visualizer
+git add -A
+
+# Check if there are changes to commit
+if git diff --staged --quiet; then
+  echo -e "${BLUE}ℹ️  No changes to commit${NC}"
+else
+  git commit -m "Auto-deploy: $(date '+%Y-%m-%d %H:%M:%S')
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+  echo -e "${BLUE}⬆️  Pushing to GitHub...${NC}"
+  git push
+fi
+
+echo -e "${BLUE}🔄 Triggering Coolify deployment...${NC}"
+
+# Trigger deployment via Coolify API
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${COOLIFY_URL}/api/v1/deploy?uuid=${APPLICATION_UUID}&force=false" \
+  -H "Authorization: Bearer ${COOLIFY_API_TOKEN}" \
+  -H "Accept: application/json")
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+BODY=$(echo "$RESPONSE" | sed '$d')
+
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+  echo -e "${GREEN}✅ Deployment triggered successfully!${NC}"
+  echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+else
+  echo -e "${RED}❌ Deployment failed with HTTP code: $HTTP_CODE${NC}"
+  echo "$BODY"
+  exit 1
+fi
+
+echo -e "${GREEN}🎉 Deployment process completed!${NC}"
