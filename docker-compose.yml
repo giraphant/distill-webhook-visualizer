@@ -5,16 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-      - .env
     environment:
-      - HOST=0.0.0.0
-      - PORT=9988
+      # These will be overridden by Coolify's environment variables
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-9988}
       - DATABASE_URL=sqlite:///./data/monitoring.db
-      - LOG_LEVEL=info
-      - SECRET_KEY=distill-webhook-local-test-key
-      - DOMAIN=localhost:9988
-      - CORS_ORIGINS=http://localhost:9988
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DOMAIN=${DOMAIN:-localhost}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:9988}
+      - RAMU_PASSWORD=${RAMU_PASSWORD:-changeme}
+      - LIGIGY_PASSWORD=${LIGIGY_PASSWORD:-changeme}
+      - QUASI_PASSWORD=${QUASI_PASSWORD:-changeme}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
