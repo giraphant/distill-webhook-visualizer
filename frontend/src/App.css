@@ -889,6 +889,12 @@ header p {
   opacity: 0.7;
 }
 
+/* Constant cards should keep horizontal layout (no timestamp) */
+.bento-value.constant-value {
+  flex-direction: row;
+  align-items: center;
+}
+
 /* 有折线图的卡片,数字不居中而是固定位置 */
 .bento-value:has(+ .bento-mini-chart) {
   margin: 0;

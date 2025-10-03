@@ -1153,7 +1153,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="bento-value" style={{ color: constant.color }}>
+                <div className="bento-value constant-value" style={{ color: constant.color }}>
                   {constant.value.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
