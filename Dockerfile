@@ -32,15 +32,12 @@ COPY . .
 # Create required directories
 RUN mkdir -p data static logs
 
-# Copy and set entrypoint (before switching to non-root user)
+# Copy and set entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Create non-root user for security
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app \
-    && chmod -R 755 /app/data /app/logs /app/static
-USER appuser
+# Note: Running as root to allow entrypoint to manage directory permissions
+# when volumes are mounted. This is necessary for Coolify deployment.
 
 # Expose port
 EXPOSE 9988
