@@ -17,9 +17,9 @@ services:
       - LIGIGY_PASSWORD=${LIGIGY_PASSWORD:-changeme}
       - QUASI_PASSWORD=${QUASI_PASSWORD:-changeme}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./static:/app/static
+      - /home/distill-webhook-visualizer/data:/app/data
+      - /home/distill-webhook-visualizer/logs:/app/logs
+      - /home/distill-webhook-visualizer/static:/app/static
     # Coolify manages port mapping through its reverse proxy
     # ports:
     #   - "9988:9988"
