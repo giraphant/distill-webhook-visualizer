@@ -2,7 +2,7 @@
 
 ## 快速部署
 
-本项目提供了自动化部署脚本，可以一键完成前端构建、提交和Coolify部署。
+本项目提供了自动化部署脚本，可以一键完成前端构建、提交和推送到GitHub。
 
 ### 使用方法
 
@@ -17,7 +17,7 @@
 2. 📋 复制构建文件到static目录
 3. 📝 Git提交更改
 4. ⬆️ 推送到GitHub
-5. 🔄 触发Coolify部署
+5. 🔄 Coolify通过GitHub webhook自动部署
 
 ### 部署流程说明
 
@@ -48,7 +48,12 @@
          │
          ▼
 ┌─────────────────┐
-│  Coolify API    │  ← 触发重新部署
+│  GitHub Webhook │  ← GitHub通知Coolify
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Coolify 自动部署│  ← 自动拉取并部署
 └────────┬────────┘
          │
          ▼
@@ -57,24 +62,15 @@
 └─────────────────┘
 ```
 
-## Coolify API配置
+## Coolify自动部署
 
-脚本使用Coolify API进行部署，默认配置：
+Coolify会监听GitHub仓库的push事件，当代码推送到GitHub后会自动触发部署。
 
-- **API端点**: `http://localhost:8000`
-- **应用UUID**: `y0cgo840wccc44sccw4wkoks`
+### 确认Webhook配置
 
-### 环境变量覆盖
-
-可以通过环境变量自定义配置：
-
-```bash
-# 自定义Coolify URL
-COOLIFY_URL=https://coolify.example.com ./deploy.sh
-
-# 自定义应用UUID
-APPLICATION_UUID=your-app-uuid ./deploy.sh
-```
+在Coolify应用设置中确认：
+- ✅ 启用了"Auto Deploy"选项
+- ✅ GitHub webhook已配置
 
 ## 手动部署
 
@@ -101,15 +97,11 @@ git commit -m "Update frontend"
 git push
 ```
 
-### 4. 在Coolify中重新部署
+### 4. Coolify自动部署
 
-在Coolify UI中点击 **Redeploy** 按钮，或使用API：
+推送到GitHub后，Coolify会自动检测到更改并开始部署。
 
-```bash
-curl -X POST "http://localhost:8000/api/v1/deploy?uuid=y0cgo840wccc44sccw4wkoks&force=false" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Accept: application/json"
-```
+或者在Coolify UI中手动点击 **Redeploy** 按钮。
 
 ## 故障排查
 
@@ -117,8 +109,8 @@ curl -X POST "http://localhost:8000/api/v1/deploy?uuid=y0cgo840wccc44sccw4wkoks&
 
 如果部署失败，检查：
 
-1. **网络连接**: 确保能访问Coolify API
-2. **API Token**: 确认token有效且有权限
+1. **GitHub连接**: 确保代码成功推送到GitHub
+2. **Coolify Webhook**: 在Coolify中确认webhook是否触发
 3. **Git状态**: 确保没有未提交的冲突
 
 ### 查看部署日志
@@ -137,4 +129,4 @@ docker logs -f app-y0cgo840wccc44sccw4wkoks-XXXXXXXXX
 
 ## 安全提示
 
-⚠️ **重要**: `deploy.sh` 包含API token，已被 `.gitignore` 排除。不要将其提交到版本控制！
+✅ 部署脚本不包含敏感信息，安全提交到版本控制。
