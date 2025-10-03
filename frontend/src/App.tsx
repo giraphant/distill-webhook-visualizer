@@ -625,7 +625,17 @@ function App() {
 
   const playAlertSound = (level: string) => {
     const config = ALERT_LEVELS[level as keyof typeof ALERT_LEVELS] || ALERT_LEVELS.medium;
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzaQ2PTNfzEGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TOgDIGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TOgDIGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TOgDIGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TOgDIGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TOgDIGI3DN79ePPwoUXbTo7q1YEgpFnt/zwHAiBjeP1/TO');
+
+    // Map alert level to sound file
+    const soundFiles = {
+      critical: '/sounds/alert-critical.wav',
+      high: '/sounds/alert-high.wav',
+      medium: '/sounds/alert-medium.wav',
+      low: '/sounds/alert-low.wav'
+    };
+
+    const soundFile = soundFiles[level as keyof typeof soundFiles] || soundFiles.medium;
+    const audio = new Audio(soundFile);
     audio.volume = config.volume;
     audio.play().catch(e => console.log('Audio play failed:', e));
   };
