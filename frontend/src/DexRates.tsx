@@ -73,18 +73,24 @@ const DexRates: React.FC = () => {
     return matchesSearch && hasMultipleExchanges;
   });
 
+  // Helper function to calculate spread for a symbol using only enabled exchanges
+  const calculateSpread = (symbol: string): number | null => {
+    const symbolRates = groupedRates[symbol];
+    const validRates = symbolRates
+      .filter(r => enabledExchanges.has(r.exchange) && r.rate !== null && r.rate !== undefined)
+      .map(r => r.rate) as number[];
+
+    return validRates.length >= 2 ? Math.max(...validRates) - Math.min(...validRates) : null;
+  };
+
   // Sort symbols
   const sortedSymbols = [...filteredSymbols].sort((a, b) => {
     if (sortBy === 'symbol') {
       return sortOrder === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
     } else if (sortBy === 'spread') {
-      // Sort by spread - only include valid (non-null) rates
-      const ratesA = groupedRates[a].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
-      const ratesB = groupedRates[b].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
-
-      // If less than 2 exchanges with valid data, treat spread as 0 (no arbitrage opportunity)
-      const spreadA = ratesA.length >= 2 ? Math.max(...ratesA) - Math.min(...ratesA) : 0;
-      const spreadB = ratesB.length >= 2 ? Math.max(...ratesB) - Math.min(...ratesB) : 0;
+      // Sort by spread - only include enabled exchanges
+      const spreadA = calculateSpread(a) ?? 0;
+      const spreadB = calculateSpread(b) ?? 0;
 
       return sortOrder === 'asc' ? spreadA - spreadB : spreadB - spreadA;
     } else {
@@ -235,18 +241,18 @@ const DexRates: React.FC = () => {
                   return acc;
                 }, {} as Record<string, number | null>);
 
-                // Calculate spread from valid (non-null) rates only
-                const validRates = [
-                  ratesByExchange.binance,
-                  ratesByExchange.bybit,
-                  ratesByExchange.hyperliquid,
-                  ratesByExchange.lighter,
-                  ratesByExchange.aster,
-                  ratesByExchange.grvt,
-                  ratesByExchange.backpack
+                // Calculate spread from enabled exchanges only
+                const enabledRates = [
+                  enabledExchanges.has('binance') ? ratesByExchange.binance : null,
+                  enabledExchanges.has('bybit') ? ratesByExchange.bybit : null,
+                  enabledExchanges.has('hyperliquid') ? ratesByExchange.hyperliquid : null,
+                  enabledExchanges.has('lighter') ? ratesByExchange.lighter : null,
+                  enabledExchanges.has('aster') ? ratesByExchange.aster : null,
+                  enabledExchanges.has('grvt') ? ratesByExchange.grvt : null,
+                  enabledExchanges.has('backpack') ? ratesByExchange.backpack : null
                 ].filter(r => r !== null && r !== undefined) as number[];
 
-                const spread = validRates.length >= 2 ? Math.max(...validRates) - Math.min(...validRates) : null;
+                const spread = enabledRates.length >= 2 ? Math.max(...enabledRates) - Math.min(...enabledRates) : null;
 
                 return (
                   <tr key={symbol}>
