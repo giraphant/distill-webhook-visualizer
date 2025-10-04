@@ -3,11 +3,11 @@ DEX funding rates comparison API.
 Fetch and compare funding rates from multiple DEXs.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 import httpx
 import asyncio
 from collections import defaultdict
@@ -15,6 +15,12 @@ from collections import defaultdict
 from app.models.database import get_db
 
 router = APIRouter()
+
+# Global cache for funding rates
+_funding_rates_cache: Optional[List['FundingRate']] = None
+_cache_last_updated: Optional[datetime] = None
+_cache_lock = asyncio.Lock()
+CACHE_DURATION_SECONDS = 60  # Cache for 1 minute
 
 
 class FundingRate(BaseModel):
@@ -330,31 +336,66 @@ async def normalize_binance_rates(rates: List[FundingRate]) -> List[FundingRate]
     return normalized
 
 
+async def fetch_all_funding_rates() -> List[FundingRate]:
+    """Fetch funding rates from all DEXs and normalize them."""
+    # Fetch from all sources in parallel
+    lighter_rates, aster_rates, grvt_rates, backpack_rates = await asyncio.gather(
+        fetch_lighter_funding_rates(),
+        fetch_aster_funding_rates(),
+        fetch_grvt_funding_rates(),
+        fetch_backpack_funding_rates()
+    )
+
+    # Normalize Binance rates to 8-hour periods
+    normalized_lighter = await normalize_binance_rates(lighter_rates)
+
+    # Combine all rates
+    return normalized_lighter + aster_rates + grvt_rates + backpack_rates
+
+
+async def get_cached_rates(force_refresh: bool = False) -> tuple[List[FundingRate], datetime]:
+    """
+    Get funding rates from cache or fetch fresh if cache is stale.
+
+    Args:
+        force_refresh: If True, bypass cache and fetch fresh data
+
+    Returns:
+        Tuple of (rates, last_updated)
+    """
+    global _funding_rates_cache, _cache_last_updated
+
+    async with _cache_lock:
+        now = datetime.utcnow()
+        cache_is_stale = (
+            _funding_rates_cache is None or
+            _cache_last_updated is None or
+            (now - _cache_last_updated).total_seconds() > CACHE_DURATION_SECONDS
+        )
+
+        if force_refresh or cache_is_stale:
+            # Fetch fresh data
+            _funding_rates_cache = await fetch_all_funding_rates()
+            _cache_last_updated = now
+
+        return _funding_rates_cache, _cache_last_updated
+
+
 @router.get("/dex/funding-rates", response_model=FundingRatesResponse)
-async def get_funding_rates():
+async def get_funding_rates(force_refresh: bool = Query(False, description="Force refresh data bypassing cache")):
     """
     Get funding rates from all supported DEXs.
     Currently supports: Lighter (Binance, Bybit, Hyperliquid), ASTER, GRVT, Backpack.
-    TODO: EdgeX requires WebSocket implementation.
+
+    By default, returns cached data (updated every minute).
+    Use ?force_refresh=true to fetch fresh data from all exchanges.
     """
     try:
-        # Fetch from all sources in parallel
-        lighter_rates, aster_rates, grvt_rates, backpack_rates = await asyncio.gather(
-            fetch_lighter_funding_rates(),
-            fetch_aster_funding_rates(),
-            fetch_grvt_funding_rates(),
-            fetch_backpack_funding_rates()
-        )
-
-        # Normalize Binance rates to 8-hour periods
-        normalized_lighter = await normalize_binance_rates(lighter_rates)
-
-        # Combine all rates
-        all_rates = normalized_lighter + aster_rates + grvt_rates + backpack_rates
+        rates, last_updated = await get_cached_rates(force_refresh=force_refresh)
 
         return FundingRatesResponse(
-            rates=all_rates,
-            last_updated=datetime.utcnow()
+            rates=rates,
+            last_updated=last_updated
         )
     except Exception as e:
         return FundingRatesResponse(
@@ -365,36 +406,30 @@ async def get_funding_rates():
 
 
 @router.get("/dex/funding-rates/{symbol}", response_model=FundingRatesResponse)
-async def get_funding_rates_by_symbol(symbol: str):
+async def get_funding_rates_by_symbol(
+    symbol: str,
+    force_refresh: bool = Query(False, description="Force refresh data bypassing cache")
+):
     """
     Get funding rates for a specific symbol across all DEXs.
     Example: /dex/funding-rates/SOL
+
+    By default, returns cached data (updated every minute).
+    Use ?force_refresh=true to fetch fresh data from all exchanges.
     """
     try:
-        # Fetch from all sources in parallel
-        lighter_rates, aster_rates, grvt_rates, backpack_rates = await asyncio.gather(
-            fetch_lighter_funding_rates(),
-            fetch_aster_funding_rates(),
-            fetch_grvt_funding_rates(),
-            fetch_backpack_funding_rates()
-        )
-
-        # Normalize Binance rates to 8-hour periods
-        normalized_lighter = await normalize_binance_rates(lighter_rates)
-
-        # Combine all rates
-        all_rates = normalized_lighter + aster_rates + grvt_rates + backpack_rates
+        rates, last_updated = await get_cached_rates(force_refresh=force_refresh)
 
         # Filter by symbol
         symbol_upper = symbol.upper()
         filtered_rates = [
-            r for r in all_rates
+            r for r in rates
             if r.symbol.upper().startswith(symbol_upper)
         ]
 
         return FundingRatesResponse(
             rates=filtered_rates,
-            last_updated=datetime.utcnow()
+            last_updated=last_updated
         )
     except Exception as e:
         return FundingRatesResponse(

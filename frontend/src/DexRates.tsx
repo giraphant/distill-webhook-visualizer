@@ -27,10 +27,13 @@ const DexRates: React.FC = () => {
     new Set(['binance', 'bybit', 'hyperliquid', 'lighter', 'aster', 'grvt', 'backpack'])
   );
 
-  const fetchRates = async () => {
+  const fetchRates = async (forceRefresh: boolean = false) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dex/funding-rates');
+      const url = forceRefresh
+        ? '/api/dex/funding-rates?force_refresh=true'
+        : '/api/dex/funding-rates';
+      const response = await fetch(url);
       const data: FundingRatesResponse = await response.json();
 
       if (data.error) {
@@ -149,7 +152,7 @@ const DexRates: React.FC = () => {
             </span>
           )}
         </div>
-        <button onClick={fetchRates} className="refresh-btn" disabled={loading}>
+        <button onClick={() => fetchRates(true)} className="refresh-btn" disabled={loading}>
           <RefreshCw size={16} className={loading ? 'spinning' : ''} />
           Refresh
         </button>

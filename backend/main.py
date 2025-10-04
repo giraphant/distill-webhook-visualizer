@@ -6,6 +6,7 @@ Main application entry point.
 
 import os
 import uvicorn
+import asyncio
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -53,10 +54,32 @@ app.include_router(constants_router, prefix="/api", tags=["constants"])
 app.include_router(dex_router, prefix="/api", tags=["dex"])
 
 
+async def background_cache_warmer():
+    """Background task to warm up the DEX funding rates cache every minute."""
+    from app.api.dex import get_cached_rates
+
+    # Wait a bit before starting to let the app fully initialize
+    await asyncio.sleep(5)
+
+    while True:
+        try:
+            # Warm up the cache
+            await get_cached_rates(force_refresh=True)
+            print("✓ DEX funding rates cache refreshed")
+        except Exception as e:
+            print(f"⚠ Failed to refresh DEX cache: {e}")
+
+        # Wait 60 seconds before next refresh
+        await asyncio.sleep(60)
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database on startup."""
     create_tables()
+
+    # Start background cache warmer task
+    asyncio.create_task(background_cache_warmer())
 
     # Remove formula column if it exists (SQLite migration)
     import sqlite3
