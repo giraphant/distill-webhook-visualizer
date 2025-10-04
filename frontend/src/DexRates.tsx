@@ -21,7 +21,7 @@ const DexRates: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'symbol' | 'spread'>('symbol');
+  const [sortBy, setSortBy] = useState<'symbol' | 'spread' | 'binance' | 'bybit' | 'hyperliquid' | 'lighter' | 'aster' | 'grvt' | 'backpack'>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [enabledExchanges, setEnabledExchanges] = useState<Set<string>>(
     new Set(['binance', 'bybit', 'hyperliquid', 'lighter', 'aster', 'grvt', 'backpack'])
@@ -77,7 +77,7 @@ const DexRates: React.FC = () => {
   const sortedSymbols = [...filteredSymbols].sort((a, b) => {
     if (sortBy === 'symbol') {
       return sortOrder === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
-    } else {
+    } else if (sortBy === 'spread') {
       // Sort by spread - only include valid (non-null) rates
       const ratesA = groupedRates[a].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
       const ratesB = groupedRates[b].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
@@ -87,27 +87,38 @@ const DexRates: React.FC = () => {
       const spreadB = ratesB.length >= 2 ? Math.max(...ratesB) - Math.min(...ratesB) : 0;
 
       return sortOrder === 'asc' ? spreadA - spreadB : spreadB - spreadA;
+    } else {
+      // Sort by specific exchange rate
+      const rateA = groupedRates[a].find(r => r.exchange === sortBy)?.rate;
+      const rateB = groupedRates[b].find(r => r.exchange === sortBy)?.rate;
+
+      // Put null/undefined values at the end
+      if ((rateA === null || rateA === undefined) && (rateB === null || rateB === undefined)) return 0;
+      if (rateA === null || rateA === undefined) return sortOrder === 'asc' ? 1 : -1;
+      if (rateB === null || rateB === undefined) return sortOrder === 'asc' ? -1 : 1;
+
+      return sortOrder === 'asc' ? rateA - rateB : rateB - rateA;
     }
   });
 
-  const formatRate = (rate: number | null): string => {
-    if (rate === null) return 'N/A';
+  const formatRate = (rate: number | null | undefined): string => {
+    if (rate === null || rate === undefined || isNaN(rate)) return 'N/A';
     const percentage = rate * 100;
     const sign = percentage >= 0 ? '+' : '';
     return `${sign}${percentage.toFixed(4)}%`;
   };
 
-  const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'var(--muted-foreground)';
+  const getRateColor = (rate: number | null | undefined): string => {
+    if (rate === null || rate === undefined || isNaN(rate)) return 'var(--muted-foreground)';
     return rate >= 0 ? 'var(--success)' : 'var(--destructive)';
   };
 
-  const handleSort = (newSortBy: 'symbol' | 'spread') => {
+  const handleSort = (newSortBy: 'symbol' | 'spread' | 'binance' | 'bybit' | 'hyperliquid' | 'lighter' | 'aster' | 'grvt' | 'backpack') => {
     if (sortBy === newSortBy) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(newSortBy);
-      setSortOrder(newSortBy === 'symbol' ? 'asc' : 'desc'); // Default desc for spread
+      setSortOrder(newSortBy === 'symbol' ? 'asc' : 'desc'); // Default desc for numeric columns
     }
   };
 
@@ -176,13 +187,41 @@ const DexRates: React.FC = () => {
                 <th onClick={() => handleSort('symbol')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Symbol {sortBy === 'symbol' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                {enabledExchanges.has('binance') && <th>Binance</th>}
-                {enabledExchanges.has('bybit') && <th>Bybit</th>}
-                {enabledExchanges.has('hyperliquid') && <th>Hyperliquid</th>}
-                {enabledExchanges.has('lighter') && <th>Lighter</th>}
-                {enabledExchanges.has('aster') && <th>ASTER</th>}
-                {enabledExchanges.has('grvt') && <th>GRVT</th>}
-                {enabledExchanges.has('backpack') && <th>BP</th>}
+                {enabledExchanges.has('binance') && (
+                  <th onClick={() => handleSort('binance')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Binance {sortBy === 'binance' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('bybit') && (
+                  <th onClick={() => handleSort('bybit')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Bybit {sortBy === 'bybit' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('hyperliquid') && (
+                  <th onClick={() => handleSort('hyperliquid')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Hyperliquid {sortBy === 'hyperliquid' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('lighter') && (
+                  <th onClick={() => handleSort('lighter')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    Lighter {sortBy === 'lighter' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('aster') && (
+                  <th onClick={() => handleSort('aster')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    ASTER {sortBy === 'aster' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('grvt') && (
+                  <th onClick={() => handleSort('grvt')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    GRVT {sortBy === 'grvt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
+                {enabledExchanges.has('backpack') && (
+                  <th onClick={() => handleSort('backpack')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    BP {sortBy === 'backpack' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                )}
                 <th onClick={() => handleSort('spread')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Spread {sortBy === 'spread' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
