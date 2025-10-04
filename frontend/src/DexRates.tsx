@@ -21,7 +21,7 @@ const DexRates: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'symbol' | 'rate' | 'spread'>('symbol');
+  const [sortBy, setSortBy] = useState<'symbol' | 'spread'>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [enabledExchanges, setEnabledExchanges] = useState<Set<string>>(
     new Set(['binance', 'bybit', 'hyperliquid', 'lighter', 'aster', 'grvt', 'backpack'])
@@ -77,19 +77,14 @@ const DexRates: React.FC = () => {
   const sortedSymbols = [...filteredSymbols].sort((a, b) => {
     if (sortBy === 'symbol') {
       return sortOrder === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
-    } else if (sortBy === 'rate') {
-      // Sort by average rate
-      const avgA = groupedRates[a].reduce((sum, r) => sum + (r.rate || 0), 0) / groupedRates[a].length;
-      const avgB = groupedRates[b].reduce((sum, r) => sum + (r.rate || 0), 0) / groupedRates[b].length;
-      return sortOrder === 'asc' ? avgA - avgB : avgB - avgA;
     } else {
-      // Sort by spread - only valid if 2+ exchanges have data
+      // Sort by spread - only include valid (non-null) rates
       const ratesA = groupedRates[a].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
       const ratesB = groupedRates[b].map(r => r.rate).filter(r => r !== null && r !== undefined) as number[];
 
-      // If less than 2 exchanges, spread is not applicable - treat as -Infinity (will be at bottom when desc)
-      const spreadA = ratesA.length >= 2 ? Math.max(...ratesA) - Math.min(...ratesA) : -Infinity;
-      const spreadB = ratesB.length >= 2 ? Math.max(...ratesB) - Math.min(...ratesB) : -Infinity;
+      // If less than 2 exchanges with valid data, treat spread as 0 (no arbitrage opportunity)
+      const spreadA = ratesA.length >= 2 ? Math.max(...ratesA) - Math.min(...ratesA) : 0;
+      const spreadB = ratesB.length >= 2 ? Math.max(...ratesB) - Math.min(...ratesB) : 0;
 
       return sortOrder === 'asc' ? spreadA - spreadB : spreadB - spreadA;
     }
@@ -107,12 +102,12 @@ const DexRates: React.FC = () => {
     return rate >= 0 ? 'var(--success)' : 'var(--destructive)';
   };
 
-  const handleSort = (newSortBy: 'symbol' | 'rate' | 'spread') => {
+  const handleSort = (newSortBy: 'symbol' | 'spread') => {
     if (sortBy === newSortBy) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(newSortBy);
-      setSortOrder(sortBy === 'symbol' ? 'asc' : 'desc'); // Default desc for rate and spread
+      setSortOrder(newSortBy === 'symbol' ? 'asc' : 'desc'); // Default desc for spread
     }
   };
 
@@ -188,9 +183,6 @@ const DexRates: React.FC = () => {
                 {enabledExchanges.has('aster') && <th>ASTER</th>}
                 {enabledExchanges.has('grvt') && <th>GRVT</th>}
                 {enabledExchanges.has('backpack') && <th>BP</th>}
-                <th onClick={() => handleSort('rate')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Avg Rate {sortBy === 'rate' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </th>
                 <th onClick={() => handleSort('spread')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Spread {sortBy === 'spread' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
@@ -204,7 +196,8 @@ const DexRates: React.FC = () => {
                   return acc;
                 }, {} as Record<string, number | null>);
 
-                const rates = [
+                // Calculate spread from valid (non-null) rates only
+                const validRates = [
                   ratesByExchange.binance,
                   ratesByExchange.bybit,
                   ratesByExchange.hyperliquid,
@@ -214,8 +207,7 @@ const DexRates: React.FC = () => {
                   ratesByExchange.backpack
                 ].filter(r => r !== null && r !== undefined) as number[];
 
-                const avgRate = rates.length > 0 ? rates.reduce((sum, r) => sum + r, 0) / rates.length : null;
-                const spread = rates.length >= 2 ? Math.max(...rates) - Math.min(...rates) : null;
+                const spread = validRates.length >= 2 ? Math.max(...validRates) - Math.min(...validRates) : null;
 
                 return (
                   <tr key={symbol}>
@@ -255,9 +247,6 @@ const DexRates: React.FC = () => {
                         {formatRate(ratesByExchange.backpack)}
                       </td>
                     )}
-                    <td style={{ color: getRateColor(avgRate), fontWeight: 500 }}>
-                      {formatRate(avgRate)}
-                    </td>
                     <td className="spread-cell">
                       {spread !== null ? `${(spread * 100).toFixed(4)}%` : 'N/A'}
                     </td>
