@@ -58,8 +58,13 @@ uploads/
 temp/
 static/generated/
 
-# Production and deployment files (contains sensitive info)
+# Frontend build output (copied to static/)
+frontend/build/
+
+# Node modules
+node_modules/
+
+# Production files (contains sensitive info)
 .env.production
 docker-compose.production.yml
 nginx.conf
-deploy.sh

@@ -85,12 +85,17 @@ distill-webhook-visualiser/
 ├── app/
 │   ├── api/              # API route handlers
 │   ├── models/           # Database models
+│   ├── services/         # External services (Pushover, etc.)
 │   └── visualization/    # Chart generation
-├── templates/            # HTML templates
+├── frontend/             # React frontend application
+├── scripts/              # Utility scripts
+├── static/               # Static assets (sounds, images)
+├── docs/                 # Documentation
 ├── main.py              # Application entry point
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile           # Docker configuration
-└── docker-compose.yml  # Docker Compose setup
+├── docker-compose.yml   # Docker Compose setup
+└── deploy.sh            # Automated deployment script
 ```
 
 ## 🌐 Production Deployment
