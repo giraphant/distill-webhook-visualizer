@@ -52,16 +52,13 @@ WEBHOOK_SECRET=your_generated_token_here
 When setting up your webhook in Distill:
 
 1. Go to Distill settings → Webhooks
-2. Set the URL: `https://your-domain.com/webhook/distill`
-3. Add a **Custom Header**:
-   - Header Name: `X-Webhook-Token`
-   - Header Value: `your_generated_token_here` (same token as above)
+2. Set the URL with token parameter: `https://your-domain.com/webhook/distill?token=your_generated_token_here`
+   - Replace `your_generated_token_here` with the same token from step 1
 
 ## Security Features
 
 - ✅ **Token-based authentication**: Only requests with the correct token are accepted
-- ✅ **Header-based**: Token sent via HTTP header (not in URL)
-- ✅ **Constant-time comparison**: Prevents timing attacks
+- ✅ **URL parameter-based**: Token sent via query parameter (?token=xxx)
 - ✅ **Backward compatible**: If `WEBHOOK_SECRET` is not set, authentication is disabled (NOT recommended for production)
 
 ## Testing
@@ -77,9 +74,8 @@ curl -X POST https://your-domain.com/webhook/distill \
 # Response: 401 Unauthorized
 
 # With correct token (should succeed)
-curl -X POST https://your-domain.com/webhook/distill \
+curl -X POST "https://your-domain.com/webhook/distill?token=your_token_here" \
   -H "Content-Type: application/json" \
-  -H "X-Webhook-Token: your_token_here" \
   -d '{"id":"test","uri":"https://example.com","text":"100"}'
 
 # Response: {"status":"success",...}
@@ -89,12 +85,12 @@ curl -X POST https://your-domain.com/webhook/distill \
 
 **Webhook requests are being rejected:**
 - Check that `WEBHOOK_SECRET` is set in your environment
-- Verify the token in Distill matches exactly (no extra spaces)
-- Check the header name is `X-Webhook-Token` (case-sensitive)
+- Verify the token in URL parameter matches exactly (no extra spaces)
+- Ensure the token is properly URL-encoded if it contains special characters
 
 **Old webhooks stopped working after update:**
 - Set `WEBHOOK_SECRET` in Coolify environment variables
-- Update Distill webhook configuration with the custom header
+- Update Distill webhook URL to include the ?token=xxx parameter
 
 ## Security Best Practices
 
