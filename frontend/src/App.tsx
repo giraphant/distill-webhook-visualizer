@@ -395,21 +395,22 @@ function App() {
     // Create a map of saved layouts by id
     const savedLayoutMap = new Map(savedLayout.map(l => [l.i, l]));
 
+    // Collect all layouts (existing + new) without modifying savedLayoutMap during iteration
+    const allLayouts: any[] = [];
+
     // Process monitors first
-    const monitorLayouts = monitors.map((monitor, index) => {
+    monitors.forEach((monitor, index) => {
       if (savedLayoutMap.has(monitor.monitor_id)) {
-        return savedLayoutMap.get(monitor.monitor_id);
+        allLayouts.push(savedLayoutMap.get(monitor.monitor_id));
       } else {
-        // New monitor - calculate position
-        // Find the highest y position from existing layouts
-        const existingLayouts = Array.from(savedLayoutMap.values());
-        const maxY = existingLayouts.length > 0 ? Math.max(...existingLayouts.map(l => l.y + l.h)) : 0;
+        // New monitor - calculate position based on all existing layouts
+        const maxY = allLayouts.length > 0 ? Math.max(...allLayouts.map(l => l.y + l.h)) : 0;
 
         let w = 1, h = 1;
         if (index % 7 === 0) { w = 2; h = 2; }
         else if (index % 5 === 0) { w = 2; h = 1; }
 
-        const newLayout = {
+        allLayouts.push({
           i: monitor.monitor_id,
           x: 0,
           y: maxY,
@@ -419,24 +420,20 @@ function App() {
           minH: 1,
           maxW: 4,
           maxH: 3
-        };
-        // Add to saved layout map so next new items can use this position
-        savedLayoutMap.set(monitor.monitor_id, newLayout);
-        return newLayout;
+        });
       }
     });
 
     // Process constants
-    const constantLayouts = constants.map((constant, index) => {
+    constants.forEach((constant) => {
       const constId = `const-${constant.id}`;
       if (savedLayoutMap.has(constId)) {
-        return savedLayoutMap.get(constId);
+        allLayouts.push(savedLayoutMap.get(constId));
       } else {
-        // New constant - calculate position
-        const existingLayouts = Array.from(savedLayoutMap.values());
-        const maxY = existingLayouts.length > 0 ? Math.max(...existingLayouts.map(l => l.y + l.h)) : 0;
+        // New constant - calculate position based on all existing layouts
+        const maxY = allLayouts.length > 0 ? Math.max(...allLayouts.map(l => l.y + l.h)) : 0;
 
-        const newLayout = {
+        allLayouts.push({
           i: constId,
           x: 0,
           y: maxY,
@@ -446,14 +443,11 @@ function App() {
           minH: 1,
           maxW: 4,
           maxH: 3
-        };
-        // Add to saved layout map so next new items can use this position
-        savedLayoutMap.set(constId, newLayout);
-        return newLayout;
+        });
       }
     });
 
-    return [...monitorLayouts, ...constantLayouts];
+    return allLayouts;
   };
 
   const onLayoutChange = (layout: any[]) => {
