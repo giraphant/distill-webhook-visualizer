@@ -3,12 +3,13 @@ Webhook API endpoints for receiving Distill monitoring data.
 """
 
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request, Header
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import logging
 import json
+import os
 
 from app.models.database import (
     MonitoringData,
@@ -21,6 +22,46 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Get webhook secret from environment variable
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+
+
+def verify_webhook_token(x_webhook_token: Optional[str] = Header(None)) -> bool:
+    """
+    Verify webhook authentication token.
+
+    Args:
+        x_webhook_token: Token from X-Webhook-Token header
+
+    Returns:
+        True if token is valid
+
+    Raises:
+        HTTPException: If token is missing or invalid
+    """
+    # If no secret is configured, allow all requests (backward compatibility)
+    if not WEBHOOK_SECRET:
+        logger.warning("WEBHOOK_SECRET not configured - webhook is not protected!")
+        return True
+
+    # Check if token is provided
+    if not x_webhook_token:
+        logger.warning("Webhook request rejected - missing X-Webhook-Token header")
+        raise HTTPException(
+            status_code=401,
+            detail="Missing authentication token. Please provide X-Webhook-Token header."
+        )
+
+    # Verify token matches
+    if x_webhook_token != WEBHOOK_SECRET:
+        logger.warning(f"Webhook request rejected - invalid token")
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid authentication token"
+        )
+
+    return True
 
 
 def parse_timestamp(timestamp_str: str) -> datetime:
@@ -181,13 +222,17 @@ async def receive_distill_webhook_debug(request: Request) -> Dict[str, Any]:
 @router.post("/distill")
 async def receive_distill_webhook(
     request: Request,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    token_verified: bool = Depends(verify_webhook_token)
 ) -> Dict[str, Any]:
     """
     Receive webhook data from Distill Web Monitor.
 
     This endpoint accepts monitoring data from Distill and stores it in the database.
     The data is processed in the background to ensure fast response times.
+
+    **Authentication:**
+    Requires X-Webhook-Token header with the configured secret token.
     """
     try:
         # Get raw body first for debugging
