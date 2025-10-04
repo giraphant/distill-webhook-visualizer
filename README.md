@@ -27,6 +27,7 @@ docker-compose up --build -d
 ### Local Development
 
 ```bash
+cd backend
 pip install -r requirements.txt
 python main.py
 ```
@@ -82,20 +83,21 @@ curl -X POST "http://localhost:8000/webhook/distill" \
 
 ```
 distill-webhook-visualiser/
-├── app/
-│   ├── api/              # API route handlers
-│   ├── models/           # Database models
-│   ├── services/         # External services (Pushover, etc.)
-│   └── visualization/    # Chart generation
-├── frontend/             # React frontend application
-├── scripts/              # Utility scripts
-├── static/               # Static assets (sounds, images)
-├── docs/                 # Documentation
-├── main.py              # Application entry point
-├── requirements.txt     # Python dependencies
+├── backend/              # FastAPI backend application
+│   ├── app/
+│   │   ├── api/         # API route handlers
+│   │   ├── models/      # Database models
+│   │   ├── services/    # External services (Pushover, etc.)
+│   │   └── visualization/  # Chart generation
+│   ├── main.py          # Application entry point
+│   ├── requirements.txt # Python dependencies
+│   └── alert_daemon.py  # Background alert daemon
+├── frontend/            # React frontend application
+├── scripts/             # Utility scripts and deployment tools
+├── static/              # Static assets (sounds, images)
+├── docs/                # Documentation
 ├── Dockerfile           # Docker configuration
-├── docker-compose.yml   # Docker Compose setup
-└── deploy.sh            # Automated deployment script
+└── docker-compose.yml   # Docker Compose setup
 ```
 
 ## 🌐 Production Deployment
