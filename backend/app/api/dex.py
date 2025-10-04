@@ -6,7 +6,7 @@ Fetch and compare funding rates from multiple DEXs.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from datetime import datetime, timedelta
 import httpx
 import asyncio
@@ -353,7 +353,7 @@ async def fetch_all_funding_rates() -> List[FundingRate]:
     return normalized_lighter + aster_rates + grvt_rates + backpack_rates
 
 
-async def get_cached_rates(force_refresh: bool = False) -> tuple[List[FundingRate], datetime]:
+async def get_cached_rates(force_refresh: bool = False) -> Tuple[List[FundingRate], datetime]:
     """
     Get funding rates from cache or fetch fresh if cache is stale.
 
@@ -375,8 +375,10 @@ async def get_cached_rates(force_refresh: bool = False) -> tuple[List[FundingRat
 
         if force_refresh or cache_is_stale:
             # Fetch fresh data
+            print(f"Fetching fresh funding rates data (force_refresh={force_refresh}, cache_is_stale={cache_is_stale})...")
             _funding_rates_cache = await fetch_all_funding_rates()
             _cache_last_updated = now
+            print(f"Fetched {len(_funding_rates_cache)} funding rates")
 
         return _funding_rates_cache, _cache_last_updated
 
